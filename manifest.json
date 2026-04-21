@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "description": "AIRecon dataset packs — security knowledge base for agent augmentation",
+  "install_dir": "~/.airecon/datasets",
+  "datasets": [
+    {
+      "id": "cybersecurity-qa",
+      "name": "Trendyol Cybersecurity Instruction Tuning",
+      "hf_path": "Trendyol/Trendyol-Cybersecurity-Instruction-Tuning-Dataset",
+      "split": "train",
+      "category": "general",
+      "fields": {"query": "user", "answer": "assistant", "context": "system"},
+      "license": "apache-2.0",
+      "description": "53k cybersecurity Q&A instruction pairs covering attack techniques, defense, and tools",
+      "enabled": true
+    },
+    {
+      "id": "cybersecurity-fenrir",
+      "name": "Cybersecurity Dataset Fenrir v2.0",
+      "hf_path": "AlicanKiraz0/Cybersecurity-Dataset-Fenrir-v2.0",
+      "split": "train",
+      "category": "general",
+      "fields": {"query": "user", "answer": "assistant", "context": "system"},
+      "license": "mit",
+      "description": "83k high-quality cybersecurity instruction pairs with diverse attack/defense scenarios",
+      "enabled": true
+    },
+    {
+      "id": "cybersecurity-cve",
+      "name": "Cybersecurity LLM CVE Dataset",
+      "hf_path": "Bouquets/Cybersecurity-LLM-CVE",
+      "split": "train",
+      "category": "vulnerability",
+      "fields": {"query": "instruction", "answer": "outputs", "context": "inputs"},
+      "license": "mit",
+      "description": "CVE-focused instruction dataset for vulnerability analysis and exploitation knowledge",
+      "enabled": true
+    },
+    {
+      "id": "bug-bounty-pentest",
+      "name": "Bug Bounty & Pentest Methodology",
+      "hf_path": "AYI-NEDJIMI/bug-bounty-pentest-en",
+      "split": "train",
+      "category": "bug-bounty",
+      "fields": {
+        "query": "question",
+        "answer": "answer",
+        "extra_fields": ["technique_name", "exploitation_steps", "payload_examples", "detection_bypass", "remediation", "vulnerability_type", "description"]
+      },
+      "license": "mit",
+      "description": "Rich bug bounty dataset: techniques, exploitation steps, payloads, bypass methods, and report templates",
+      "enabled": true
+    },
+    {
+      "id": "ctf-instruct",
+      "name": "CTF Instruct Dataset",
+      "hf_path": "Luoberta/CTF-Instruct",
+      "split": "train",
+      "category": "ctf",
+      "fields": {"query": "instruction", "answer": "output"},
+      "license": "mit",
+      "description": "CTF challenge instruction pairs covering pwn, web, crypto, forensics, and reverse engineering",
+      "enabled": true
+    },
+    {
+      "id": "ctf-satml24",
+      "name": "CTF SaTML 2024 (Attack/Defense)",
+      "hf_path": "ethz-spylab/ctf-satml24",
+      "split": "default",
+      "category": "ctf",
+      "fields": {"query": "user", "answer": "assistant", "context": "system"},
+      "license": "mit",
+      "description": "Real CTF attack/defense interaction data from SaTML 2024 competition",
+      "enabled": true
+    },
+    {
+      "id": "pentest-books",
+      "name": "Cybersecurity Penetration Testing Books",
+      "hf_path": "baig31/Cybersecurity_penetration_testing_books",
+      "split": "train",
+      "category": "pentest",
+      "fields": {"query": null, "answer": null, "conversations_field": "conversations"},
+      "license": "unknown",
+      "description": "Pentest book content in conversation format covering methodology and techniques",
+      "enabled": false,
+      "gated": true,
+      "note": "Requires HuggingFace login: huggingface-cli login"
+    },
+    {
+      "id": "red-team-offensive",
+      "name": "Ultimate Offensive Red Team Dataset",
+      "hf_path": "WNT3D/Ultimate-Offensive-Red-Team",
+      "split": "train",
+      "category": "pentest",
+      "fields": {"query": "instruction", "answer": "output", "context": "input"},
+      "license": "mit",
+      "description": "10K-100K red team offensive security instruction pairs — attack techniques, exploitation, and adversarial scenarios",
+      "enabled": true
+    },
+    {
+      "id": "nuclei-templates",
+      "name": "Nuclei Templates Instruct (Ernest v3)",
+      "hf_path": "OzLabs/ernest-nuclei-templates-v3",
+      "split": "train",
+      "category": "pentest",
+      "fields": {"query": "prompt", "answer": "completion"},
+      "license": "mit",
+      "description": "Nuclei template generation dataset — prompt/completion pairs for writing and understanding nuclei vulnerability templates",
+      "enabled": true
+    },
+    {
+      "id": "pentest-agent-chatml",
+      "name": "Pentest Agent Dataset (ChatML)",
+      "hf_path": "7h3-R3v3n4n7/pentest-agent-dataset-chatml",
+      "split": "train",
+      "category": "pentest",
+      "fields": {"query": null, "answer": null, "conversations_field": "messages"},
+      "license": "apache-2.0",
+      "description": "322k CVE-based pentesting workflows covering enumeration, exploitation, and red team techniques from MITRE/NVD/ExploitDB",
+      "enabled": true
+    }
+  ]
+}

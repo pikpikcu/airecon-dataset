@@ -1,0 +1,23 @@
+{
+  "id": "cybersecurity-cve",
+  "name": "Cybersecurity LLM CVE Dataset",
+  "hf_path": "Bouquets/Cybersecurity-LLM-CVE",
+  "hf_url": "https://huggingface.co/datasets/Bouquets/Cybersecurity-LLM-CVE",
+  "split": "train",
+  "category": "vulnerability",
+  "license": "mit",
+  "size": "varies",
+  "fields": {
+    "query": "instruction",
+    "answer": "outputs",
+    "context": "inputs"
+  },
+  "description": "CVE-focused instruction dataset for vulnerability analysis, CVE descriptions, impact assessment, and exploitation knowledge.",
+  "tags": ["cve", "vulnerability", "exploit", "nvd", "cvss"],
+  "sample_queries": [
+    "CVE-2021-44228 log4j exploitation",
+    "CVE-2023 remote code execution",
+    "CVSS score critical vulnerability"
+  ],
+  "notes": "Best for CVE-specific queries and vulnerability classification."
+}

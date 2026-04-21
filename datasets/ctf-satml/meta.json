@@ -1,0 +1,24 @@
+{
+  "id": "ctf-satml24",
+  "name": "CTF SaTML 2024 — Attack/Defense Interactions",
+  "hf_path": "ethz-spylab/ctf-satml24",
+  "hf_url": "https://huggingface.co/datasets/ethz-spylab/ctf-satml24",
+  "split": "default",
+  "category": "ctf",
+  "license": "mit",
+  "size": "varies",
+  "fields": {
+    "query": "user",
+    "answer": "assistant",
+    "context": "system"
+  },
+  "description": "Real CTF attack/defense interaction data from SaTML 2024 competition. Contains actual adversarial conversations, secret extraction attempts, and defense strategies.",
+  "tags": ["ctf", "attack", "defense", "prompt-injection", "adversarial", "competition"],
+  "sample_queries": [
+    "prompt injection attack",
+    "secret extraction technique",
+    "CTF defense strategy",
+    "adversarial prompt"
+  ],
+  "notes": "Unique dataset with real competition data. Useful for understanding adversarial LLM interactions in CTF context."
+}

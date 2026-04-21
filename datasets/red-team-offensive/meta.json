@@ -1,0 +1,20 @@
+{
+  "id": "red-team-offensive",
+  "name": "Ultimate Offensive Red Team Dataset",
+  "hf_path": "WNT3D/Ultimate-Offensive-Red-Team",
+  "hf_url": "https://huggingface.co/datasets/WNT3D/Ultimate-Offensive-Red-Team",
+  "split": "train",
+  "category": "pentest",
+  "license": "mit",
+  "size": "10K–100K rows",
+  "fields": {"query": "instruction", "answer": "output", "context": "input"},
+  "description": "Red team offensive security instruction tuning dataset covering attack techniques, exploitation methods, and adversarial security scenarios.",
+  "tags": ["red-team", "offensive", "pentest", "exploit", "attack", "cybersecurity"],
+  "sample_queries": [
+    "how to perform privilege escalation on Linux",
+    "explain lateral movement using pass-the-hash",
+    "how to bypass EDR detection",
+    "write a reverse shell payload"
+  ],
+  "notes": "High-quality offensive red team dataset, 141 likes. Best for attack technique knowledge."
+}

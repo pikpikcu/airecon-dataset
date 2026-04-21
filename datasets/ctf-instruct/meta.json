@@ -1,0 +1,24 @@
+{
+  "id": "ctf-instruct",
+  "name": "CTF Instruct Dataset",
+  "hf_path": "Luoberta/CTF-Instruct",
+  "hf_url": "https://huggingface.co/datasets/Luoberta/CTF-Instruct",
+  "split": "train",
+  "category": "ctf",
+  "license": "mit",
+  "size": "varies",
+  "fields": {
+    "query": "instruction",
+    "answer": "output"
+  },
+  "description": "CTF challenge instruction pairs covering pwn, web exploitation, cryptography, forensics, and reverse engineering with step-by-step solutions.",
+  "tags": ["ctf", "pwn", "web", "crypto", "forensics", "reverse", "exploitation"],
+  "sample_queries": [
+    "buffer overflow ret2libc",
+    "RSA small exponent attack",
+    "format string vulnerability",
+    "blind SQL injection CTF",
+    "steganography detection"
+  ],
+  "notes": "Ideal for CTF mode in AIRecon. Pairs well with airecon-skills ctf/ directory."
+}

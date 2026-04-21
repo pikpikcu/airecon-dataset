@@ -1,0 +1,23 @@
+{
+  "id": "cybersecurity-fenrir",
+  "name": "Cybersecurity Dataset Fenrir v2.0",
+  "hf_path": "AlicanKiraz0/Cybersecurity-Dataset-Fenrir-v2.0",
+  "hf_url": "https://huggingface.co/datasets/AlicanKiraz0/Cybersecurity-Dataset-Fenrir-v2.0",
+  "split": "train",
+  "category": "general",
+  "license": "mit",
+  "size": "~83,900 rows",
+  "fields": {
+    "query": "user",
+    "answer": "assistant",
+    "context": "system"
+  },
+  "description": "Large-scale cybersecurity instruction dataset with diverse attack/defense scenarios, tool explanations, and security methodology.",
+  "tags": ["cybersecurity", "pentest", "red-team", "blue-team", "instruction-tuning"],
+  "sample_queries": [
+    "how to enumerate SMB shares",
+    "explain lateral movement techniques",
+    "how does a reverse shell work"
+  ],
+  "notes": "Larger and more diverse than cybersecurity-qa. Good complement dataset."
+}

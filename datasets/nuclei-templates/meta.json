@@ -1,0 +1,20 @@
+{
+  "id": "nuclei-templates",
+  "name": "Nuclei Templates Instruct (Ernest v3)",
+  "hf_path": "OzLabs/ernest-nuclei-templates-v3",
+  "hf_url": "https://huggingface.co/datasets/OzLabs/ernest-nuclei-templates-v3",
+  "split": "train",
+  "category": "pentest",
+  "license": "mit",
+  "size": "varies",
+  "fields": {"query": "prompt", "answer": "completion"},
+  "description": "Nuclei template generation dataset — prompt/completion pairs for writing, understanding, and customizing nuclei vulnerability detection templates.",
+  "tags": ["nuclei", "template", "vulnerability-scanner", "detection", "yaml", "pentest"],
+  "sample_queries": [
+    "write nuclei template for CVE-2021-44228",
+    "nuclei template for SQL injection detection",
+    "nuclei SSRF detection template",
+    "create nuclei template for exposed admin panel"
+  ],
+  "notes": "Directly useful for AIRecon since nuclei is a core tool in the Kali sandbox. Helps agent write/understand nuclei templates."
+}

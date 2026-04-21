@@ -1,0 +1,23 @@
+{
+  "id": "cybersecurity-qa",
+  "name": "Trendyol Cybersecurity Instruction Tuning",
+  "hf_path": "Trendyol/Trendyol-Cybersecurity-Instruction-Tuning-Dataset",
+  "hf_url": "https://huggingface.co/datasets/Trendyol/Trendyol-Cybersecurity-Instruction-Tuning-Dataset",
+  "split": "train",
+  "category": "general",
+  "license": "apache-2.0",
+  "size": "~53,200 rows",
+  "fields": {
+    "query": "user",
+    "answer": "assistant",
+    "context": "system"
+  },
+  "description": "High-quality cybersecurity instruction tuning dataset covering attack techniques, defense strategies, tool usage, and security concepts in Q&A format.",
+  "tags": ["cybersecurity", "instruction-tuning", "pentest", "defense", "tools"],
+  "sample_queries": [
+    "how to perform SQL injection",
+    "what is XSS and how to prevent it",
+    "explain buffer overflow attack"
+  ],
+  "notes": "Good general-purpose security knowledge base. Covers both offensive and defensive topics."
+}
