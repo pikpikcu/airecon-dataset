@@ -1,4 +1,10 @@
-# airecon-dataset
+<h1 align="center">airecon-datasets</h1>
+<h4 align="center">Airecon Dataset Installer for <a href="https://github.com/pikpikcu/airecon">AIRecon</a></h4>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/AIRecon-compatible-green.svg">
+  <img src="https://img.shields.io/badge/datasets-10-blue.svg">
+</p>
 
 Local security knowledge base for [AIRecon](https://github.com/pikpikcu/airecon). Downloads datasets from HuggingFace, indexes them into SQLite FTS5 databases, and makes them searchable via AIRecon's `dataset_search` tool — **100% offline** after installation.
 
