@@ -35,8 +35,12 @@ Restart AIRecon — the `dataset_search` tool picks up new databases automatical
 | `red-team-offensive` | Ultimate Offensive Red Team | 78,430 | pentest | Attack chains, privilege escalation, lateral movement |
 | `nuclei-templates` | Nuclei Templates Instruct (Ernest v3) | 23,180 | pentest | Nuclei template generation — YAML, matchers, extractors |
 | `pentest-agent-chatml` | Pentest Agent Dataset (ChatML) | 322,433 | pentest | CVE-based workflows: enumeration → exploitation → post-ex |
+| `nvd-security-instructions` | NVD Security Instructions (CVE Analysis) | 2,063 | vulnerability | Structured CVE instruction-completion pairs from NVD |
+| `apt-privesc` | APT-Style Privilege Escalation Dataset | 1,000 | pentest | Linux priv esc techniques with APT tactics and commands |
+| `stackexchange-re` | StackExchange Reverse Engineering Q&A | 20,641 | ctf | Binary analysis, disassembly, debugging, malware, CTF RE |
+| `sql-injection-qa` | SQL Injection Conversational Q&A | 50,632 | pentest | Conversational SQLi pairs — detection, bypass, exploitation |
 
-**Total: ~1,017,877 records across 9 datasets**
+**Total: ~1,092,213 records across 13 datasets**
 
 ### Gated (requires HuggingFace login)
 
@@ -117,6 +121,34 @@ Rich methodology dataset from AYI-NEDJIMI. Covers 7 types of entries: techniques
 
 ---
 
+### nvd-security-instructions
+2k structured instruction-completion pairs built from the NIST National Vulnerability Database. Each entry pairs a CVE-specific question with a structured analysis: severity, affected systems, attack vector, impact, and remediation steps.
+
+**Sample queries:** `CVE 2023 remote code execution`, `Apache vulnerability severity analysis`, `authentication bypass NVD`, `deserialization CVE remediation`
+
+---
+
+### apt-privesc
+1k Linux privilege escalation techniques modeled on APT (Advanced Persistent Threat) tradecraft. Each entry maps a technique description to its exact shell command, MITRE tactics classification, and category (kernel exploit, SUID abuse, cron job, etc.).
+
+**Sample queries:** `SUID binary privilege escalation`, `cron job writable escalation`, `kernel exploit Linux`, `sudo misconfiguration privilege`
+
+---
+
+### stackexchange-re
+20k reverse engineering Q&A sourced from StackExchange. Covers: x86/x64 disassembly, PE/ELF format analysis, GDB/radare2/Ghidra usage, dynamic analysis, anti-debug bypass, malware unpacking, and CTF reverse engineering challenges.
+
+**Sample queries:** `radare2 disassembly commands`, `ELF binary analysis`, `anti debug techniques bypass`, `malware unpacking PE`
+
+---
+
+### sql-injection-qa
+10k conversational SQL injection Q&A pairs. Covers all major SQLi types: error-based, blind (time/boolean), union-based, out-of-band, second-order, and NoSQL injection. Includes WAF bypass, filter evasion, and modern database-specific techniques.
+
+**Sample queries:** `blind SQL injection boolean`, `SQL injection WAF bypass`, `time based SQL injection`, `union select injection attack`
+
+---
+
 ## CLI Reference
 
 ```
@@ -145,10 +177,13 @@ python install.py --list
 python install.py --dry-run
 
 # Install only specific datasets
-python install.py --include nuclei-templates red-team-offensive
+python install.py --include nuclei-templates red-team-offensive apt-privesc
 
 # Skip large CTF datasets
 python install.py --exclude ctf-instruct ctf-satml24
+
+# Install new additions only
+python install.py --include nvd-security-instructions apt-privesc stackexchange-re sql-injection-qa
 
 # Install and keep download cache
 python install.py --keep-cache

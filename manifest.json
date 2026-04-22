@@ -118,6 +118,54 @@
       "license": "apache-2.0",
       "description": "322k CVE-based pentesting workflows covering enumeration, exploitation, and red team techniques from MITRE/NVD/ExploitDB",
       "enabled": true
+    },
+    {
+      "id": "nvd-security-instructions",
+      "name": "NVD Security Instructions (CVE Analysis)",
+      "hf_path": "AnamayaVyas/nvd-security-instructions",
+      "split": "train",
+      "category": "vulnerability",
+      "fields": {"text_field": "text"},
+      "license": "mit",
+      "description": "2k structured CVE analysis pairs from NVD — vulnerability analysis, severity assessment, who is affected, and remediation guidance in Llama instruction format",
+      "enabled": true
+    },
+    {
+      "id": "apt-privesc",
+      "name": "APT-Style Privilege Escalation Dataset",
+      "hf_path": "darkknight25/APT_STYLE_Privilege_Escalation_Dataset",
+      "split": "train",
+      "category": "pentest",
+      "fields": {
+        "query": "description",
+        "answer": "command",
+        "extra_fields": ["tactics", "category"]
+      },
+      "license": "mit",
+      "description": "1k Linux privilege escalation techniques with APT-style tactics, exploitation commands, and MITRE ATT&CK category mapping",
+      "enabled": true
+    },
+    {
+      "id": "stackexchange-re",
+      "name": "StackExchange Reverse Engineering Q&A",
+      "hf_path": "mlfoundations-dev/stackexchange_reverseengineering",
+      "split": "train",
+      "category": "ctf",
+      "fields": {"query": "instruction", "answer": "completion"},
+      "license": "cc-by-sa-4.0",
+      "description": "20k reverse engineering Q&A from StackExchange — binary analysis, disassembly, debugging, malware analysis, and CTF techniques",
+      "enabled": true
+    },
+    {
+      "id": "sql-injection-qa",
+      "name": "SQL Injection Conversational Q&A",
+      "hf_path": "Kaveny/sql-injection",
+      "split": "train",
+      "category": "pentest",
+      "fields": {"query": null, "answer": null, "conversations_field": "conversations"},
+      "license": "apache-2.0",
+      "description": "10k conversational SQL injection Q&A pairs covering detection, bypass, exploitation, and blind SQLi techniques",
+      "enabled": true
     }
   ]
 }

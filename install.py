@@ -146,11 +146,28 @@ def _iter_json(path: Path) -> Iterator[dict]:
         logger.debug("Failed to parse %s: %s", path, e)
 
 
+def _iter_parquet(path: Path) -> Iterator[dict]:
+    try:
+        import pyarrow.parquet as pq
+    except ImportError:
+        logger.warning("pyarrow not installed — skipping %s (run: pip install pyarrow)", path.name)
+        return
+    try:
+        table = pq.read_table(path)
+        for row in table.to_pylist():
+            if isinstance(row, dict):
+                yield row
+    except Exception as e:
+        logger.debug("Failed to read parquet %s: %s", path, e)
+
+
 def _iter_file(path: Path) -> Iterator[dict]:
     if path.suffix == ".jsonl":
         yield from _iter_jsonl(path)
     elif path.suffix == ".json":
         yield from _iter_json(path)
+    elif path.suffix == ".parquet":
+        yield from _iter_parquet(path)
 
 
 # ── File finder ──────────────────────────────────────────────────────────────
@@ -163,7 +180,7 @@ _SKIP_STEMS = {
 
 
 def _find_data_files(local_dir: Path, dataset_id: str) -> list[Path]:
-    """Find indexable .jsonl/.json files, skip meta/config files and hidden dirs."""
+    """Find indexable .jsonl/.json/.parquet files, skip meta/config files and hidden dirs."""
 
     # ctf-satml24: use full chat.json (records are capped during indexing)
     if dataset_id == "ctf-satml24":
@@ -175,7 +192,7 @@ def _find_data_files(local_dir: Path, dataset_id: str) -> list[Path]:
             return [sample]
 
     result = []
-    for suffix in ("*.jsonl", "*.json"):
+    for suffix in ("*.jsonl", "*.json", "*.parquet"):
         for f in sorted(local_dir.rglob(suffix)):
             # Skip hidden directories like .cache/huggingface/
             if any(part.startswith(".") for part in f.relative_to(local_dir).parts[:-1]):
@@ -368,6 +385,26 @@ def _rows_bug_bounty(row: dict) -> list[tuple[str, str, str]]:
     return []
 
 
+def _rows_llama_text(row: dict, text_field: str = "text") -> list[tuple[str, str, str]]:
+    """Extractor for datasets with a single text field in Llama [INST]...[/INST] format."""
+    text = str(row.get(text_field) or "").strip()
+    if not text:
+        return []
+    # Split at [/INST] to separate instruction from response
+    sep = "[/INST]"
+    idx = text.find(sep)
+    if idx == -1:
+        return []
+    inst = text[:idx].strip()
+    resp = text[idx + len(sep):].strip()
+    # Strip Llama special tokens from instruction
+    inst = inst.replace("<s>", "").replace("[INST]", "").strip()
+    resp = resp.replace("</s>", "").strip()
+    if len(inst) < 20 or len(resp) < 20:
+        return []
+    return [(inst, resp, "")]
+
+
 def _extract_rows(row: dict, meta: dict) -> list[tuple[str, str, str]]:
     dataset_id = meta.get("id", "")
     fields = meta.get("fields", {})
@@ -377,6 +414,9 @@ def _extract_rows(row: dict, meta: dict) -> list[tuple[str, str, str]]:
 
     if dataset_id == "bug-bounty-pentest":
         return _rows_bug_bounty(row)
+
+    if dataset_id == "nvd-security-instructions":
+        return _rows_llama_text(row, "text")
 
     conv_field = fields.get("conversations_field")
     if conv_field:
