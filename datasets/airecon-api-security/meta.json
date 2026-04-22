@@ -1,0 +1,24 @@
+{
+  "id": "airecon-api-security",
+  "name": "AIRecon API Security",
+  "hf_path": "pikpikcu/airecon-datasets",
+  "hf_url": "https://huggingface.co/datasets/pikpikcu/airecon-datasets",
+  "split": "api-security",
+  "category": "api",
+  "license": "mit",
+  "size": "3,000 entries",
+  "fields": {
+    "query": "instruction",
+    "answer": "response"
+  },
+  "description": "API security testing knowledge covering REST, GraphQL, gRPC, authentication bypass, injection, IDOR, and rate-limit evasion patterns.",
+  "tags": ["airecon", "api", "rest", "graphql", "grpc", "authentication", "idor", "injection", "rate-limit", "jwt"],
+  "sample_queries": [
+    "How should you discover undocumented API endpoints?",
+    "What is the methodology for testing REST API authentication?",
+    "How to test for GraphQL introspection vulnerabilities?",
+    "What are common IDOR patterns in REST APIs?",
+    "How to bypass API rate limiting?"
+  ],
+  "notes": "First-party AIRecon dataset. Used in ANALYSIS and EXPLOIT phases. Covers API endpoint discovery, auth bypass, injection in API params, and business logic flaws."
+}

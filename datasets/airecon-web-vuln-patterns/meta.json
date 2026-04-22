@@ -1,0 +1,24 @@
+{
+  "id": "airecon-web-vuln-patterns",
+  "name": "AIRecon Web Vulnerability Patterns",
+  "hf_path": "pikpikcu/airecon-datasets",
+  "hf_url": "https://huggingface.co/datasets/pikpikcu/airecon-datasets",
+  "split": "web-vuln-patterns",
+  "category": "web",
+  "license": "mit",
+  "size": "3,000 entries",
+  "fields": {
+    "query": "instruction",
+    "answer": "response"
+  },
+  "description": "Web vulnerability detection patterns, HTTP response indicators, and validation steps for XSS, SQLi, SSTI, SSRF, and other web vulnerabilities.",
+  "tags": ["airecon", "web", "xss", "sqli", "ssti", "ssrf", "lfi", "rce", "vulnerability-detection", "http-patterns"],
+  "sample_queries": [
+    "What HTTP response patterns indicate a potential SQL injection vulnerability?",
+    "How do you identify reflected XSS in HTTP responses?",
+    "What are the indicators of SSTI in a web application?",
+    "How to detect SSRF vulnerability through response analysis?",
+    "What validation steps confirm an LFI vulnerability?"
+  ],
+  "notes": "First-party AIRecon dataset. Used in ANALYSIS and EXPLOIT phases. Covers detection indicators, payload patterns, and confirmation steps for common web vulnerabilities."
+}

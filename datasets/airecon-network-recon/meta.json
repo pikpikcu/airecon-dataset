@@ -1,0 +1,24 @@
+{
+  "id": "airecon-network-recon",
+  "name": "AIRecon Network Recon",
+  "hf_path": "pikpikcu/airecon-datasets",
+  "hf_url": "https://huggingface.co/datasets/pikpikcu/airecon-datasets",
+  "split": "network-recon",
+  "category": "network",
+  "license": "mit",
+  "size": "3,000 entries",
+  "fields": {
+    "query": "instruction",
+    "answer": "response"
+  },
+  "description": "Network service enumeration knowledge covering nmap strategies, service fingerprinting, port analysis, banner grabbing, and protocol-specific reconnaissance.",
+  "tags": ["airecon", "network", "nmap", "port-scan", "fingerprinting", "banner-grabbing", "smb", "ftp", "ssh", "enumeration"],
+  "sample_queries": [
+    "What is the correct nmap scan sequence for a comprehensive port and service enumeration?",
+    "How should you approach service fingerprinting after port discovery?",
+    "What are the indicators of an SMB service worth investigating?",
+    "How to enumerate FTP service for anonymous access?",
+    "What nmap scripts are most useful for web service fingerprinting?"
+  ],
+  "notes": "First-party AIRecon dataset. Used in RECON phase alongside recon-playbook. Covers network-level enumeration tactics and tool usage strategies."
+}

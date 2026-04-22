@@ -1,0 +1,24 @@
+{
+  "id": "airecon-recon-playbook",
+  "name": "AIRecon Recon Playbook",
+  "hf_path": "pikpikcu/airecon-datasets",
+  "hf_url": "https://huggingface.co/datasets/pikpikcu/airecon-datasets",
+  "split": "recon-playbook",
+  "category": "recon",
+  "license": "mit",
+  "size": "3,000 entries",
+  "fields": {
+    "query": "instruction",
+    "answer": "response"
+  },
+  "description": "AIRecon-specific recon methodology, phase tactics, and agent directives — curated and optimized for the AIRecon RECON pipeline phase.",
+  "tags": ["airecon", "recon", "methodology", "phase-tactics", "subdomain", "port-scan", "fingerprinting"],
+  "sample_queries": [
+    "What is the correct order of phases in an AIRecon penetration test?",
+    "How should an AIRecon agent begin reconnaissance on a new target URL?",
+    "What tools should be used for passive subdomain enumeration?",
+    "How to approach reconnaissance when WAF is detected?",
+    "What are the agent directives for the RECON phase?"
+  ],
+  "notes": "First-party AIRecon dataset. Pairs with network-recon for full RECON phase coverage. Covers phase transitions, agent loop behavior, and tool selection strategy."
+}
