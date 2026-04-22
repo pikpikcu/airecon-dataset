@@ -1,0 +1,25 @@
+{
+  "id": "sql-injection-qa",
+  "name": "SQL Injection Conversational Q&A",
+  "hf_path": "Kaveny/sql-injection",
+  "hf_url": "https://huggingface.co/datasets/Kaveny/sql-injection",
+  "split": "train",
+  "category": "pentest",
+  "license": "apache-2.0",
+  "size": "~10,000 entries",
+  "fields": {
+    "query": null,
+    "answer": null,
+    "conversations_field": "conversations"
+  },
+  "description": "Conversational SQL injection Q&A pairs covering detection, bypass, exploitation, and blind SQLi techniques.",
+  "tags": ["sqli", "sql-injection", "blind-sqli", "boolean-based", "time-based", "union-based", "waf-bypass"],
+  "sample_queries": [
+    "How to detect SQL injection in login form?",
+    "Boolean-based blind SQL injection technique",
+    "Time-based blind SQLi payload",
+    "SQLi WAF bypass with encoding",
+    "Union-based SQL injection extraction"
+  ],
+  "notes": "Conversational format — extracted via _rows_conversations(). Good for hands-on SQLi testing scenarios."
+}

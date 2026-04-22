@@ -1,5 +1,6 @@
 {
-  "id": "ctf-satml24",
+  "id": "ctf-satml",
+  "aliases": ["ctf-satml24"],
   "name": "CTF SaTML 2024 — Attack/Defense Interactions",
   "hf_path": "ethz-spylab/ctf-satml24",
   "hf_url": "https://huggingface.co/datasets/ethz-spylab/ctf-satml24",

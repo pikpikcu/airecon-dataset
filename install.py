@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Iterator
 
-MANIFEST = Path(__file__).parent / "manifest.json"
+DATASETS_DIR = Path(__file__).parent / "datasets"
 CUSTOM_DIR = Path(__file__).parent / "custom"
 
 RED = "\033[0;31m"
@@ -48,7 +48,6 @@ def _get_install_dir() -> Path:
 
 
 def _get_cache_dir() -> Path:
-    """Separate cache dir — never mixed with .db files."""
     d = Path.home() / ".cache" / "airecon-dataset"
     d.mkdir(parents=True, exist_ok=True)
     return d
@@ -67,10 +66,95 @@ def _check_deps() -> bool:
     return True
 
 
+def _load_all_metas() -> list[dict]:
+    """Load all meta.json files from datasets/*/meta.json, sorted by folder name."""
+    metas = []
+    if not DATASETS_DIR.exists():
+        err(f"datasets/ directory not found: {DATASETS_DIR}")
+        return metas
+    for meta_file in sorted(DATASETS_DIR.glob("*/meta.json")):
+        try:
+            meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            dataset_name = meta_file.parent.name
+            if "hf_path" not in meta:
+                warn(f"Skipping {meta_file} — missing required field (hf_path)")
+                continue
+            aliases: list[str] = []
+            legacy_id = str(meta.get("id") or "").strip()
+            if legacy_id and legacy_id != dataset_name:
+                aliases.append(legacy_id)
+            for alias in meta.get("aliases", []):
+                alias = str(alias).strip()
+                if alias and alias != dataset_name and alias not in aliases:
+                    aliases.append(alias)
+            meta["aliases"] = aliases
+            meta["id"] = dataset_name
+            metas.append(meta)
+        except Exception as e:
+            warn(f"Failed to read {meta_file}: {e}")
+    return metas
+
+
+def _dataset_lookup(metas: list[dict]) -> dict[str, dict]:
+    lookup: dict[str, dict] = {}
+    for meta in metas:
+        for name in [meta["id"], *meta.get("aliases", [])]:
+            existing = lookup.get(name)
+            if existing and existing["id"] != meta["id"]:
+                warn(f"Duplicate dataset selector '{name}' in datasets/")
+                continue
+            lookup[name] = meta
+    return lookup
+
+
+def _resolve_dataset_names(names: list[str], metas: list[dict], option_name: str) -> list[dict]:
+    lookup = _dataset_lookup(metas)
+    resolved: list[dict] = []
+    seen: set[str] = set()
+    for name in names:
+        meta = lookup.get(name)
+        if not meta:
+            err(f"Dataset not found for {option_name}: '{name}' — run --list to see folders in datasets/")
+            sys.exit(1)
+        if name in meta.get("aliases", []):
+            warn(f"{option_name}: '{name}' is a legacy alias, using '{meta['id']}'")
+        if meta["id"] in seen:
+            continue
+        resolved.append(meta)
+        seen.add(meta["id"])
+    return resolved
+
+
+def _db_paths(install_dir: Path, dataset_id: str) -> tuple[Path, Path]:
+    final_db = install_dir / f"{dataset_id}.db"
+    temp_db = install_dir / f".{dataset_id}.tmp.db"
+    if temp_db.exists():
+        temp_db.unlink()
+    return final_db, temp_db
+
+
+def _remove_file(path: Path) -> None:
+    if path.exists():
+        path.unlink()
+
+
+def _cleanup_legacy_alias_artifacts(meta: dict, install_dir: Path) -> None:
+    cache_dir = _get_cache_dir()
+    for alias in meta.get("aliases", []):
+        legacy_db = install_dir / f"{alias}.db"
+        if legacy_db.exists():
+            legacy_db.unlink()
+            info(f"Removed legacy database alias: {legacy_db.name}")
+        legacy_cache = cache_dir / alias
+        if legacy_cache.exists():
+            shutil.rmtree(legacy_cache, ignore_errors=True)
+            info(f"Removed legacy cache alias: {legacy_cache}")
+
+
 # ── SQLite FTS builder ───────────────────────────────────────────────────────
 
-def _build_db(install_dir: Path, dataset_id: str) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
-    db_path = install_dir / f"{dataset_id}.db"
+def _build_db(db_path: Path) -> tuple[sqlite3.Connection, sqlite3.Cursor]:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.executescript("""
@@ -114,7 +198,6 @@ def _iter_jsonl(path: Path) -> Iterator[dict]:
 
 
 def _iter_json(path: Path) -> Iterator[dict]:
-    # Peek at first non-empty line to detect NDJSON vs JSON array
     with path.open(encoding="utf-8", errors="replace") as f:
         first_line = ""
         for line in f:
@@ -123,7 +206,6 @@ def _iter_json(path: Path) -> Iterator[dict]:
                 first_line = stripped
                 break
 
-    # NDJSON: first line is a complete JSON object
     if first_line.startswith("{"):
         try:
             json.loads(first_line)
@@ -132,7 +214,6 @@ def _iter_json(path: Path) -> Iterator[dict]:
         except json.JSONDecodeError:
             pass
 
-    # Standard JSON array
     try:
         with path.open(encoding="utf-8", errors="replace") as f:
             data = json.load(f)
@@ -180,10 +261,8 @@ _SKIP_STEMS = {
 
 
 def _find_data_files(local_dir: Path, dataset_id: str) -> list[Path]:
-    """Find indexable .jsonl/.json/.parquet files, skip meta/config files and hidden dirs."""
-
-    # ctf-satml24: use full chat.json (records are capped during indexing)
-    if dataset_id == "ctf-satml24":
+    """Find indexable data files, skip meta/config files and hidden dirs."""
+    if dataset_id == "ctf-satml":
         full = local_dir / "chat.json"
         if full.exists():
             return [full]
@@ -194,10 +273,8 @@ def _find_data_files(local_dir: Path, dataset_id: str) -> list[Path]:
     result = []
     for suffix in ("*.jsonl", "*.json", "*.parquet"):
         for f in sorted(local_dir.rglob(suffix)):
-            # Skip hidden directories like .cache/huggingface/
             if any(part.startswith(".") for part in f.relative_to(local_dir).parts[:-1]):
                 continue
-            # Skip known non-data files
             if f.stem.lower().rstrip(".") in _SKIP_STEMS:
                 continue
             result.append(f)
@@ -291,7 +368,6 @@ def _list_to_str(v: object, bullet: str = "- ") -> str:
 
 
 def _rows_bug_bounty(row: dict) -> list[tuple[str, str, str]]:
-    """Type-aware extractor for AYI-NEDJIMI/bug-bounty-pentest-en."""
     row_type = row.get("type", "")
     parts: list[str] = []
     query = ""
@@ -386,18 +462,15 @@ def _rows_bug_bounty(row: dict) -> list[tuple[str, str, str]]:
 
 
 def _rows_llama_text(row: dict, text_field: str = "text") -> list[tuple[str, str, str]]:
-    """Extractor for datasets with a single text field in Llama [INST]...[/INST] format."""
     text = str(row.get(text_field) or "").strip()
     if not text:
         return []
-    # Split at [/INST] to separate instruction from response
     sep = "[/INST]"
     idx = text.find(sep)
     if idx == -1:
         return []
     inst = text[:idx].strip()
     resp = text[idx + len(sep):].strip()
-    # Strip Llama special tokens from instruction
     inst = inst.replace("<s>", "").replace("[INST]", "").strip()
     resp = resp.replace("</s>", "").strip()
     if len(inst) < 20 or len(resp) < 20:
@@ -409,14 +482,12 @@ def _extract_rows(row: dict, meta: dict) -> list[tuple[str, str, str]]:
     dataset_id = meta.get("id", "")
     fields = meta.get("fields", {})
 
-    if dataset_id == "ctf-satml24":
+    if dataset_id == "ctf-satml":
         return _rows_satml(row)
-
     if dataset_id == "bug-bounty-pentest":
         return _rows_bug_bounty(row)
-
     if dataset_id == "nvd-security-instructions":
-        return _rows_llama_text(row, "text")
+        return _rows_llama_text(row, fields.get("text_field", "text"))
 
     conv_field = fields.get("conversations_field")
     if conv_field:
@@ -427,18 +498,18 @@ def _extract_rows(row: dict, meta: dict) -> list[tuple[str, str, str]]:
 
 # ── Download + index ─────────────────────────────────────────────────────────
 
+_STANDARD_SPLITS = {"train", "test", "validation", "default"}
+
+
 def _download_and_index(meta: dict, install_dir: Path, keep_cache: bool = False, dry_run: bool = False) -> bool:
     from huggingface_hub import snapshot_download
 
     dataset_id = meta["id"]
     hf_path = meta["hf_path"]
     category = meta.get("category", "general")
-
-    if meta.get("gated"):
-        warn(f"Skipping {dataset_id} — gated dataset (requires: huggingface-cli login)")
-        return False
-
     cache_dir = _get_cache_dir() / dataset_id
+    final_db, temp_db = _db_paths(install_dir, dataset_id)
+
     info(f"Downloading {dataset_id} ({hf_path}) ...")
 
     if dry_run:
@@ -460,12 +531,9 @@ def _download_and_index(meta: dict, install_dir: Path, keep_cache: bool = False,
     if not data_files:
         warn(f"No indexable files found for {dataset_id}")
         warn(f"  Cache dir: {local_dir}")
-        warn(f"  Files: {[f.name for f in local_dir.iterdir() if f.is_file()]}")
         return False
 
     # Filter to config-specific subdirectory when split is a config name (not a standard HF split).
-    # e.g. pikpikcu/airecon-datasets has data/recon-playbook/, data/api-security/, etc.
-    _STANDARD_SPLITS = {"train", "test", "validation", "default"}
     split = meta.get("split", "train")
     if split not in _STANDARD_SPLITS:
         filtered = [f for f in data_files if split in f.parts]
@@ -473,135 +541,220 @@ def _download_and_index(meta: dict, install_dir: Path, keep_cache: bool = False,
             data_files = filtered
 
     info(f"Indexing {len(data_files)} file(s): {[f.name for f in data_files]}")
-    con, cur = _build_db(install_dir, dataset_id)
+    con: sqlite3.Connection | None = None
     total = 0
-    batch: list[tuple] = []
+    try:
+        con, cur = _build_db(temp_db)
+        batch: list[tuple] = []
 
-    for data_file in data_files:
-        file_rows = 0
-        for row in _iter_file(data_file):
-            for query, answer, context in _extract_rows(row, meta):
-                if not query or not answer:
-                    continue
-                batch.append((query[:2000], answer[:4000], context[:1000], category, dataset_id))
-                file_rows += 1
-                if len(batch) >= 1000:
-                    cur.executemany(
-                        "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
-                        batch,
-                    )
-                    con.commit()
-                    total += len(batch)
-                    batch.clear()
-        logger.debug("  %s: %d rows", data_file.name, file_rows)
+        for data_file in data_files:
+            file_rows = 0
+            for row in _iter_file(data_file):
+                for query, answer, context in _extract_rows(row, meta):
+                    if not query or not answer:
+                        continue
+                    batch.append((query[:2000], answer[:4000], context[:1000], category, dataset_id))
+                    file_rows += 1
+                    if len(batch) >= 1000:
+                        cur.executemany(
+                            "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
+                            batch,
+                        )
+                        con.commit()
+                        total += len(batch)
+                        batch.clear()
+            logger.debug("  %s: %d rows", data_file.name, file_rows)
 
-    if batch:
-        cur.executemany(
-            "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
-            batch,
-        )
-        con.commit()
-        total += len(batch)
-
-    con.close()
+        if batch:
+            cur.executemany(
+                "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
+                batch,
+            )
+            con.commit()
+            total += len(batch)
+    except Exception as e:
+        if con is not None:
+            con.close()
+        _remove_file(temp_db)
+        err(f"Failed to index {dataset_id}: {e}")
+        return False
+    else:
+        if con is not None:
+            con.close()
 
     if total == 0:
-        warn(f"No records indexed for {dataset_id} — check field mapping")
+        _remove_file(temp_db)
+        warn(f"No records indexed for {dataset_id} — check fields in meta.json")
         return False
 
-    ok(f"Indexed {total:,} records → {install_dir}/{dataset_id}.db")
+    try:
+        temp_db.replace(final_db)
+    except Exception as e:
+        _remove_file(temp_db)
+        err(f"Failed to finalize database for {dataset_id}: {e}")
+        return False
 
-    # Auto-cleanup cache after successful indexing
+    ok(f"Indexed {total:,} records → {final_db}")
+    _cleanup_legacy_alias_artifacts(meta, install_dir)
+
     if not keep_cache and cache_dir.exists():
         shutil.rmtree(cache_dir, ignore_errors=True)
-        info(f"Cache cleaned up: {cache_dir}")
+        info(f"Cache cleaned: {cache_dir}")
 
     return True
 
 
 # ── Custom data ──────────────────────────────────────────────────────────────
 
-def _install_custom(install_dir: Path, custom_path: Path | None, dry_run: bool) -> None:
+def _install_custom(install_dir: Path, custom_path: Path | None, dry_run: bool) -> list[str]:
     paths: list[Path] = []
     if custom_path:
         paths = [Path(custom_path)]
     elif CUSTOM_DIR.exists():
         paths = [p for p in CUSTOM_DIR.glob("*.jsonl") if p.stem != "example"]
 
+    failed: list[str] = []
     for p in paths:
         if not p.exists():
             err(f"Custom file not found: {p}")
+            failed.append(str(p))
             continue
 
         dataset_id = f"custom-{p.stem}"
+        final_db, temp_db = _db_paths(install_dir, dataset_id)
         info(f"Indexing custom: {p.name}")
 
         if dry_run:
             ok(f"[dry-run] Would index {p.name}")
             continue
 
-        con, cur = _build_db(install_dir, dataset_id)
+        con: sqlite3.Connection | None = None
         total = 0
-        for row in _iter_jsonl(p):
-            query = str(row.get("query", row.get("instruction", row.get("question", "")))).strip()
-            answer = str(row.get("answer", row.get("output", row.get("response", "")))).strip()
-            context = str(row.get("context", row.get("system", ""))).strip()
-            category = str(row.get("category", "custom"))
-            if query and answer:
-                cur.execute(
-                    "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
-                    (query[:2000], answer[:4000], context[:1000], category, f"custom:{p.name}"),
-                )
-                total += 1
-        con.commit()
-        con.close()
-        ok(f"Indexed {total:,} custom records → {install_dir}/{dataset_id}.db")
+        try:
+            con, cur = _build_db(temp_db)
+            for row in _iter_jsonl(p):
+                query = str(row.get("query", row.get("instruction", row.get("question", "")))).strip()
+                answer = str(row.get("answer", row.get("output", row.get("response", "")))).strip()
+                context = str(row.get("context", row.get("system", ""))).strip()
+                category = str(row.get("category", "custom"))
+                if query and answer:
+                    cur.execute(
+                        "INSERT INTO records (query,answer,context,category,source) VALUES (?,?,?,?,?)",
+                        (query[:2000], answer[:4000], context[:1000], category, f"custom:{p.name}"),
+                    )
+                    total += 1
+            con.commit()
+        except Exception as e:
+            if con is not None:
+                con.close()
+            _remove_file(temp_db)
+            err(f"Failed to index custom file {p}: {e}")
+            failed.append(str(p))
+            continue
+        else:
+            if con is not None:
+                con.close()
+
+        if total == 0:
+            _remove_file(temp_db)
+            warn(f"No custom records indexed for {p.name}")
+            failed.append(str(p))
+            continue
+
+        try:
+            temp_db.replace(final_db)
+        except Exception as e:
+            _remove_file(temp_db)
+            err(f"Failed to finalize custom database for {p.name}: {e}")
+            failed.append(str(p))
+            continue
+
+        ok(f"Indexed {total:,} custom records → {final_db}")
+
+    return failed
 
 
 # ── CLI commands ─────────────────────────────────────────────────────────────
 
-def cmd_install(args: argparse.Namespace) -> None:
-    if not _check_deps():
-        sys.exit(1)
-
-    manifest = json.loads(MANIFEST.read_text())
-    install_dir = _get_install_dir()
-    datasets = manifest["datasets"]
-
-    if args.list:
-        print(f"\n{'ID':<28} {'Category':<14} {'Status'}")
-        print("-" * 70)
-        for d in datasets:
-            if d.get("gated"):
-                status = "gated (requires HF login)"
-            elif not d.get("enabled", True):
-                status = "disabled (use --include to force)"
-            else:
-                status = "enabled"
-            print(f"{d['id']:<28} {d.get('category',''):<14} {status}")
-        print()
+def cmd_list(metas: list[dict]) -> None:
+    if not metas:
+        warn("No datasets found in datasets/ — check the directory.")
         return
 
-    include = set(args.include) if args.include else None
-    exclude = set(args.exclude) if args.exclude else set()
+    print(f"\n  {BOLD}Available Datasets{NC}  ({len(metas)} total)\n")
+    print(f"  {'Dataset':<32} {'Category':<14} {'Size':<16} {'Status'}")
+    print("  " + "─" * 80)
+    for m in metas:
+        if m.get("gated"):
+            status = f"{YELLOW}gated{NC} (huggingface-cli login)"
+        elif not m.get("enabled", True):
+            status = f"{YELLOW}disabled{NC}"
+        else:
+            status = f"{GREEN}enabled{NC}"
+        size = m.get("size", "—")
+        print(f"  {m['id']:<32} {m.get('category',''):<14} {size:<16} {status}")
+    aliased = [m for m in metas if m.get("aliases")]
+    if aliased:
+        print()
+        print(f"  {BOLD}Legacy Aliases{NC}")
+        for m in aliased:
+            print(f"  {m['id']:<32} {', '.join(m['aliases'])}")
+    print()
+    print(f"  Install all :  python3 install.py --all")
+    print(f"  Install one :  python3 install.py --dataset <dataset-name>")
+    print()
 
-    selected = []
-    for d in datasets:
-        if include and d["id"] not in include:
-            continue
-        if d["id"] in exclude:
-            continue
-        if d.get("gated"):
-            warn(f"Skipping {d['id']} — gated (requires: huggingface-cli login)")
-            continue
-        if not d.get("enabled", True) and not include:
-            warn(f"Skipping disabled: {d['id']} (use --include {d['id']} to force)")
-            continue
-        selected.append(d)
+
+def cmd_install(args: argparse.Namespace) -> int:
+    needs_hf_download = bool((args.all or args.dataset) and not args.dry_run)
+    if needs_hf_download and not _check_deps():
+        return 1
+
+    install_dir = _get_install_dir()
+    metas: list[dict] = []
+    exclude: set[str] = set()
+
+    if args.all or args.dataset or args.exclude:
+        metas = _load_all_metas()
+        if not metas:
+            err("No datasets found. Check that datasets/ directory contains meta.json files.")
+            return 1
+        if args.exclude:
+            exclude = {m["id"] for m in _resolve_dataset_names(args.exclude, metas, "--exclude")}
+
+    # Build selected list
+    selected: list[dict] = []
+
+    if args.dataset:
+        # --dataset: install specific dataset folder names (can force even if disabled)
+        for m in _resolve_dataset_names(args.dataset, metas, "--dataset"):
+            if m.get("gated"):
+                warn(f"Skipping {m['id']} — gated: {m.get('gated_note', 'requires huggingface-cli login')}")
+                continue
+            selected.append(m)
+
+    elif args.all:
+        # --all: install all enabled, non-gated datasets
+        for m in metas:
+            if m["id"] in exclude:
+                continue
+            if m.get("gated"):
+                warn(f"Skipping {m['id']} — gated (requires: huggingface-cli login)")
+                continue
+            if not m.get("enabled", True):
+                warn(f"Skipping {m['id']} — disabled (use --dataset {m['id']} to force)")
+                continue
+            selected.append(m)
+    elif args.custom:
+        selected = []
+    else:
+        err("No action specified. Use --all, --dataset <dataset-name>, --custom <file>, or --list.")
+        err("Run: python3 install.py --help")
+        return 1
 
     if not selected and not args.custom:
-        warn("No datasets selected. Use --list to see available datasets.")
-        return
+        warn("No datasets selected.")
+        return 0
 
     print()
     print(f"  {BOLD}AIRecon Dataset Installer{NC}")
@@ -621,56 +774,82 @@ def cmd_install(args: argparse.Namespace) -> None:
         if not success:
             failed.append(meta["id"])
 
+    custom_failed: list[str] = []
     if args.custom:
-        _install_custom(install_dir, Path(args.custom), dry_run=args.dry_run)
+        custom_failed = _install_custom(install_dir, Path(args.custom), dry_run=args.dry_run)
     elif not args.no_custom:
-        _install_custom(install_dir, None, dry_run=args.dry_run)
+        custom_failed = _install_custom(install_dir, None, dry_run=args.dry_run)
 
     print()
     if failed:
         warn(f"Failed: {', '.join(failed)}")
+    if custom_failed:
+        warn(f"Custom failed: {', '.join(custom_failed)}")
+    if failed or custom_failed:
+        err("Installation finished with errors.")
+        return 1
     ok(f"Done → {install_dir}")
     info("Restart AIRecon to activate dataset_search tool.")
+    return 0
 
 
 def cmd_installed(args: argparse.Namespace) -> None:
     install_dir = _get_install_dir()
     dbs = sorted(install_dir.glob("*.db"))
     if not dbs:
-        info("No datasets installed yet. Run: python3 install.py")
+        info("No datasets installed yet. Run: python3 install.py --all")
         return
 
-    print(f"\n{'Dataset':<32} {'Records':>10}  {'Size':>8}  Path")
-    print("-" * 80)
+    metas = _load_all_metas()
+    lookup = _dataset_lookup(metas)
+
+    print(f"\n  {BOLD}Installed Datasets{NC}\n")
+    print(f"  {'Dataset':<32} {'Records':>10}  {'Size':>8}  Path")
+    print("  " + "─" * 80)
     for db in dbs:
+        label = db.stem
+        meta = lookup.get(db.stem)
+        if meta and db.stem in meta.get("aliases", []):
+            label = f"{meta['id']} [legacy alias]"
         try:
             con = sqlite3.connect(db)
             count = con.execute("SELECT COUNT(*) FROM records").fetchone()[0]
             con.close()
             size_mb = db.stat().st_size / 1024 / 1024
-            print(f"{db.stem:<32} {count:>10,}  {size_mb:>6.1f}MB  {db}")
+            print(f"  {label:<32} {count:>10,}  {size_mb:>6.1f}MB  {db}")
         except Exception:
-            print(f"{db.stem:<32} {'(error)':>10}")
+            print(f"  {label:<32} {'(error)':>10}")
     print()
 
 
 def cmd_remove(args: argparse.Namespace) -> None:
     install_dir = _get_install_dir()
     cache_dir = _get_cache_dir()
-    for dataset_id in args.datasets:
+    metas = _load_all_metas()
+    lookup = _dataset_lookup(metas)
+    for dataset_name in args.datasets:
+        meta = lookup.get(dataset_name)
+        candidate_names = [dataset_name]
+        if meta:
+            candidate_names = [meta["id"], *meta.get("aliases", [])]
         removed = False
-        db = install_dir / f"{dataset_id}.db"
-        if db.exists():
-            db.unlink()
-            ok(f"Removed {dataset_id}.db")
-            removed = True
-        cache = cache_dir / dataset_id
-        if cache.exists():
-            shutil.rmtree(cache, ignore_errors=True)
-            ok(f"Removed cache: {cache}")
-            removed = True
+        seen: set[str] = set()
+        for candidate in candidate_names:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            db = install_dir / f"{candidate}.db"
+            if db.exists():
+                db.unlink()
+                ok(f"Removed {candidate}.db")
+                removed = True
+            cache = cache_dir / candidate
+            if cache.exists():
+                shutil.rmtree(cache, ignore_errors=True)
+                ok(f"Removed cache: {cache}")
+                removed = True
         if not removed:
-            warn(f"Not found: {dataset_id}")
+            warn(f"Not found: {dataset_name}")
 
 
 def cmd_clean_cache(args: argparse.Namespace) -> None:
@@ -689,31 +868,35 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 install.py                            Install all enabled datasets
-  python3 install.py --list                     List available datasets
-  python3 install.py --include ctf-instruct     Install one dataset
-  python3 install.py --exclude nist-training    Install all except nist
-  python3 install.py --keep-cache               Keep download cache after indexing
-  python3 install.py --custom mydata.jsonl      Add custom JSONL dataset
-  python3 install.py --dry-run                  Preview without downloading
-  python3 install.py installed                  Show installed datasets
-  python3 install.py remove ctf-instruct        Remove a dataset
-  python3 install.py clean-cache                Delete all download caches
+  python3 install.py --list                           List all available datasets
+  python3 install.py --all                            Install all enabled datasets
+  python3 install.py --dataset airecon-api-security   Install one dataset
+  python3 install.py --dataset ctf-instruct red-team-offensive  Install multiple
+  python3 install.py --all --exclude ctf-satml        Install all except specific
+  python3 install.py --all --keep-cache               Install and keep download cache
+  python3 install.py --all --dry-run                  Preview without downloading
+  python3 install.py --custom mydata.jsonl            Index a custom JSONL file
+  python3 install.py installed                        Show installed datasets
+  python3 install.py remove ctf-instruct              Remove an installed dataset
+  python3 install.py clean-cache                      Delete all download caches
         """,
     )
     sub = parser.add_subparsers(dest="cmd")
 
-    parser.add_argument("--list", action="store_true", help="List available datasets")
-    parser.add_argument("--include", nargs="+", metavar="ID", help="Only install these IDs")
-    parser.add_argument("--exclude", nargs="+", metavar="ID", help="Skip these IDs")
-    parser.add_argument("--custom", metavar="FILE", help="Custom JSONL file to index")
+    # Main flags
+    parser.add_argument("--list",    action="store_true", help="List all available datasets from datasets/")
+    parser.add_argument("--all",     action="store_true", help="Install all enabled datasets")
+    parser.add_argument("--dataset", nargs="+", metavar="DATASET", help="Install specific dataset folder(s) from datasets/")
+    parser.add_argument("--exclude", nargs="+", metavar="DATASET", help="Skip these dataset folder names (use with --all)")
+    parser.add_argument("--custom",  metavar="FILE", help="Custom JSONL file to index")
     parser.add_argument("--no-custom", action="store_true", help="Skip custom/ directory")
     parser.add_argument("--keep-cache", action="store_true", help="Keep download cache after indexing")
     parser.add_argument("--dry-run", action="store_true", help="Preview without downloading")
 
-    sub.add_parser("installed", help="List installed datasets with record counts")
+    # Subcommands
+    sub.add_parser("installed",   help="List installed datasets with record counts")
     rm = sub.add_parser("remove", help="Remove installed dataset(s)")
-    rm.add_argument("datasets", nargs="+", metavar="ID")
+    rm.add_argument("datasets", nargs="+", metavar="DATASET")
     sub.add_parser("clean-cache", help="Delete all download caches")
 
     args = parser.parse_args()
@@ -724,8 +907,10 @@ Examples:
         cmd_remove(args)
     elif args.cmd == "clean-cache":
         cmd_clean_cache(args)
+    elif args.list:
+        cmd_list(_load_all_metas())
     else:
-        cmd_install(args)
+        sys.exit(cmd_install(args))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+{
+  "id": "apt-privesc",
+  "name": "APT-Style Privilege Escalation Dataset",
+  "hf_path": "darkknight25/APT_STYLE_Privilege_Escalation_Dataset",
+  "hf_url": "https://huggingface.co/datasets/darkknight25/APT_STYLE_Privilege_Escalation_Dataset",
+  "split": "train",
+  "category": "pentest",
+  "license": "mit",
+  "size": "~1,000 entries",
+  "fields": {
+    "query": "description",
+    "answer": "command",
+    "extra_fields": ["tactics", "category"]
+  },
+  "description": "Linux privilege escalation techniques with APT-style tactics, exploitation commands, and MITRE ATT&CK category mapping.",
+  "tags": ["privesc", "privilege-escalation", "linux", "apt", "mitre", "attck", "post-exploitation"],
+  "sample_queries": [
+    "Linux SUID binary privilege escalation",
+    "Cron job exploitation for root",
+    "Writable /etc/passwd privilege escalation",
+    "Kernel exploit privilege escalation",
+    "Docker breakout privilege escalation"
+  ],
+  "notes": "Compact but highly specific dataset. APT-style means commands are realistic and operational. Useful for EXPLOIT phase post-exploitation."
+}

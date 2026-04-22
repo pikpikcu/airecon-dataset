@@ -1,0 +1,24 @@
+{
+  "id": "stackexchange-re",
+  "name": "StackExchange Reverse Engineering Q&A",
+  "hf_path": "mlfoundations-dev/stackexchange_reverseengineering",
+  "hf_url": "https://huggingface.co/datasets/mlfoundations-dev/stackexchange_reverseengineering",
+  "split": "train",
+  "category": "ctf",
+  "license": "cc-by-sa-4.0",
+  "size": "~20,000 entries",
+  "fields": {
+    "query": "instruction",
+    "answer": "completion"
+  },
+  "description": "Reverse engineering Q&A from StackExchange — binary analysis, disassembly, debugging, malware analysis, and CTF techniques.",
+  "tags": ["reverse-engineering", "binary-analysis", "disassembly", "gdb", "ida", "ghidra", "malware", "ctf"],
+  "sample_queries": [
+    "How to decompile a stripped binary?",
+    "GDB dynamic analysis techniques",
+    "IDA Pro function identification",
+    "Anti-debugging detection bypass",
+    "Malware unpacking techniques"
+  ],
+  "notes": "Large high-quality RE dataset from real StackExchange answers. Excellent for binary exploitation and reverse engineering CTF tasks."
+}

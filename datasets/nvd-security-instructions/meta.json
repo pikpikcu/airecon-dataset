@@ -1,0 +1,22 @@
+{
+  "id": "nvd-security-instructions",
+  "name": "NVD Security Instructions (CVE Analysis)",
+  "hf_path": "AnamayaVyas/nvd-security-instructions",
+  "hf_url": "https://huggingface.co/datasets/AnamayaVyas/nvd-security-instructions",
+  "split": "train",
+  "category": "vulnerability",
+  "license": "mit",
+  "size": "~2,000 entries",
+  "fields": {
+    "text_field": "text"
+  },
+  "description": "Structured CVE analysis pairs from NVD — vulnerability analysis, severity assessment, affected systems, and remediation guidance in Llama instruction format.",
+  "tags": ["cve", "nvd", "vulnerability", "severity", "cvss", "remediation", "cpe"],
+  "sample_queries": [
+    "Analyze CVE-2023-1234 severity and impact",
+    "What systems are affected by this vulnerability?",
+    "CVE remediation and patch guidance",
+    "CVSS score interpretation"
+  ],
+  "notes": "Uses Llama [INST]..[/INST] format — extracted via _rows_llama_text(). Good for CVE triage and vulnerability assessment workflows."
+}
