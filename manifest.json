@@ -166,6 +166,50 @@
       "license": "apache-2.0",
       "description": "10k conversational SQL injection Q&A pairs covering detection, bypass, exploitation, and blind SQLi techniques",
       "enabled": true
+    },
+    {
+      "id": "airecon-recon-playbook",
+      "name": "AIRecon Recon Playbook",
+      "hf_path": "pikpikcu/airecon-datasets",
+      "split": "recon-playbook",
+      "category": "recon",
+      "fields": {"query": "instruction", "answer": "response"},
+      "license": "mit",
+      "description": "3k AIRecon-specific recon methodology, phase tactics, and agent directives — optimized for the AIRecon pipeline",
+      "enabled": true
+    },
+    {
+      "id": "airecon-web-vuln-patterns",
+      "name": "AIRecon Web Vulnerability Patterns",
+      "hf_path": "pikpikcu/airecon-datasets",
+      "split": "web-vuln-patterns",
+      "category": "web",
+      "fields": {"query": "instruction", "answer": "response"},
+      "license": "mit",
+      "description": "3k web vulnerability detection patterns — HTTP indicators, XSS/SQLi/SSTI signatures, and validation steps for ANALYSIS/EXPLOIT phases",
+      "enabled": true
+    },
+    {
+      "id": "airecon-api-security",
+      "name": "AIRecon API Security",
+      "hf_path": "pikpikcu/airecon-datasets",
+      "split": "api-security",
+      "category": "api",
+      "fields": {"query": "instruction", "answer": "response"},
+      "license": "mit",
+      "description": "3k API security testing knowledge — REST, GraphQL, gRPC auth bypass, injection, IDOR, and rate-limit evasion patterns",
+      "enabled": true
+    },
+    {
+      "id": "airecon-network-recon",
+      "name": "AIRecon Network Recon",
+      "hf_path": "pikpikcu/airecon-datasets",
+      "split": "network-recon",
+      "category": "network",
+      "fields": {"query": "instruction", "answer": "response"},
+      "license": "mit",
+      "description": "3k network service enumeration knowledge — nmap strategies, service fingerprinting, port analysis, and banner grabbing",
+      "enabled": true
     }
   ]
 }
