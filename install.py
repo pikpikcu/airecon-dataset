@@ -463,6 +463,15 @@ def _download_and_index(meta: dict, install_dir: Path, keep_cache: bool = False,
         warn(f"  Files: {[f.name for f in local_dir.iterdir() if f.is_file()]}")
         return False
 
+    # Filter to config-specific subdirectory when split is a config name (not a standard HF split).
+    # e.g. pikpikcu/airecon-datasets has data/recon-playbook/, data/api-security/, etc.
+    _STANDARD_SPLITS = {"train", "test", "validation", "default"}
+    split = meta.get("split", "train")
+    if split not in _STANDARD_SPLITS:
+        filtered = [f for f in data_files if split in f.parts]
+        if filtered:
+            data_files = filtered
+
     info(f"Indexing {len(data_files)} file(s): {[f.name for f in data_files]}")
     con, cur = _build_db(install_dir, dataset_id)
     total = 0
